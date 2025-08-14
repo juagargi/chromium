@@ -2,13 +2,17 @@ version: "3.8"
 
 services:
   chrom-b:
-    build: .
+    build:
+      context: .
+      args:
+        UID: "${UID}"
+        GID: "${GID}"
     container_name: chrom-b
-    # Match your earlier 'docker run -u root'
-    user: root
+
+    user: "${UID}:${GID}"
     # Keep the container alive without producing logs:
-    # entrypoint: []                  # neutralize any ENTRYPOINT from the image
-    entrypoint: ["/bin/sh","-lc","safe-third-party; exec sleep infinity"]
+    entrypoint: []                  # neutralize any ENTRYPOINT from the image
+    # entrypoint: ["/bin/sh","-lc","safe-third-party; exec sleep infinity"]
     command: [
       "sleep",
       "infinity",
@@ -16,28 +20,7 @@ services:
     restart: unless-stopped         # stays up across reboots unless you stop it
     working_dir: /chromium
     volumes:
-      - /home/juagargi/devel/ETH/chromium/chromium:/chromium
+      - /home/juagargi/devel/ETH/chromium:/chromium
       - /home/juagargi/devel/depot_tools:/depot_tools
     environment:
       - PATH=/depot_tools:$PATH
-
-
-# version: "3.8"
-
-# services:
-#   chrom-b:
-#     build: .
-#     container_name: chrom-b
-#     user: root
-#     stdin_open: true   # Equivalent to -i
-#     tty: true          # Equivalent to -t
-#     entrypoint: []      # Override any ENTRYPOINT from the Dockerfile
-#     command: ["/bin/bash"]
-#     working_dir: /chromium
-#     volumes:
-#       - /home/juagargi/devel/ETH/chromium/chromium:/chromium
-#       - /home/juagargi/devel/depot_tools:/depot_tools
-#     environment:
-#       - PATH=/depot_tools:$PATH
-
-

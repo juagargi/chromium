@@ -1,7 +1,11 @@
 # XXX(juagargi) from https://github.com/chromium/chromium/blob/main/docs/linux/build_instructions.md#docker
 
 # Use an official Ubuntu base image with Docker already installed
-FROM ubuntu:22.04
+FROM ubuntu:24.04
+
+# With the same UID and GID as the current user.
+ARG UID=1000
+ARG GID=1000
 
 # Set environment variables
 ENV DEBIAN_FRONTEND=noninteractive
@@ -14,10 +18,6 @@ RUN apt-get update && \
 # Export depot_tools path
 ENV PATH="/depot_tools:${PATH}"
 
-# Configure git for safe.directory
-RUN git config --global --add safe.directory /depot_tools && \
-    git config --global --add safe.directory /chromium/src
-
 # Set the working directory to the existing Chromium source directory.
 # This can be either "/chromium/src" or "/chromium".
 WORKDIR /chromium/src
@@ -25,14 +25,15 @@ WORKDIR /chromium/src
 # Expose any necessary ports (if needed)
 # EXPOSE 8080
 
-# Create a dummy user and group to avoid permission issues
-RUN groupadd -g 1001 chrom-d && \
-    useradd -u 1000 -g 1001 -m chrom-d
+# Create a dummy user and group with desired UID and GID to avoid permission issues.
+RUN groupadd -g ${GID} chrom-d && \
+    useradd -u ${UID} -g ${GID} -m chrom-d
 
+RUN echo "chrom-d ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/99-chrom-d
 
 # ============================= DEPENDENCIES ====================
 ENV DEBIAN_FRONTEND=noninteractive
-COPY chromium/src/build/install-build-deps.py /tmp/install-build-deps.py
+COPY build/install-build-deps.py /tmp/install-build-deps.py
 RUN chmod +x /tmp/install-build-deps.py
 
 # Provide a no-op sudo for the script (build runs as root; sudo would fail)
@@ -63,6 +64,10 @@ RUN rm -f /usr/local/bin/sudo
 
 # Install a simple build script:
 RUN install -m755 /dev/stdin /usr/local/bin/chromium-build.sh <<'SH'
+# Configure git for safe.directory
+git config --global --add safe.directory /depot_tools && \
+git config --global --add safe.directory /chromium/src
+
 # Loop through each directory in /chromium/src/third_party and add
 # them as safe directories in Git
 for dir in /chromium/src/third_party/*; do
