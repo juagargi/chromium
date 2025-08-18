@@ -2,14 +2,21 @@ version: "3.8"
 
 services:
   chrom-b:
+    privileged: true
     build:
       context: .
       args:
         UID: "${UID}"
         GID: "${GID}"
     container_name: chrom-b
+    network_mode: host
 
     user: "${UID}:${GID}"
+    cap_add:
+      - SYS_PTRACE
+    security_opt:
+      - seccomp:unconfined
+      - label=disable
     # Keep the container alive without producing logs:
     entrypoint: []                  # neutralize any ENTRYPOINT from the image
     # entrypoint: ["/bin/sh","-lc","safe-third-party; exec sleep infinity"]
@@ -22,5 +29,21 @@ services:
     volumes:
       - /home/juagargi/devel/ETH/chromium:/chromium
       - /home/juagargi/devel/depot_tools:/depot_tools
+      # DBUS:
+      - /run/dbus/system_bus_socket:/run/dbus/system_bus_socket:ro  # optional; silences the dbus warning
+      # X11:
+      - /tmp/.X11-unix:/tmp/.X11-unix:rw   # X11 socket
+      # Wayland:
+      - ${XDG_RUNTIME_DIR}/${WAYLAND_DISPLAY}:/run/user/${UID}/${WAYLAND_DISPLAY}
+    devices:
+      - /dev/dri:/dev/dri       # GPU/ANGLE/VAAPI, safe to keep even if you pass --disable-gpu
+    shm_size: "2gb"             # Chromium likes a bigger /dev/shm
     environment:
       - PATH=/depot_tools:$PATH
+      - CHROME_DEVEL_SANDBOX:/usr/local/sbin/chrome-devel-sandbox
+      # X11
+      - DISPLAY=${DISPLAY}
+      - QT_X11_NO_MITSHM=1       # avoids MIT-SHM issues across mount namespaces
+      # Wayland
+      - WAYLAND_DISPLAY=${WAYLAND_DISPLAY}
+      - XDG_RUNTIME_DIR=/run/user/1000

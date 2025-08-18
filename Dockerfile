@@ -1,7 +1,7 @@
 # XXX(juagargi) from https://github.com/chromium/chromium/blob/main/docs/linux/build_instructions.md#docker
 
 # Use an official Ubuntu base image with Docker already installed
-FROM ubuntu:24.04
+FROM ubuntu:25.04
 
 # With the same UID and GID as the current user.
 ARG UID=1000
@@ -12,8 +12,12 @@ ENV DEBIAN_FRONTEND=noninteractive
 
 # Install Mandatory tools (curl git python3) and optional tools (vim sudo)
 RUN apt-get update && \
-    apt-get install -y curl git lsb-release python3 git file vim sudo && \
-    rm -rf /var/lib/apt/lists/*
+    apt-get install -y \
+      curl git lsb-release python3 git file \
+      vim sudo gdbserver net-tools apt-file \
+      psmisc netcat-openbsd x11-apps \
+      && rm -rf /var/lib/apt/lists/*
+RUN apt-file update
 
 # Export depot_tools path
 ENV PATH="/depot_tools:${PATH}"
@@ -23,13 +27,25 @@ ENV PATH="/depot_tools:${PATH}"
 WORKDIR /chromium/src
 
 # Expose any necessary ports (if needed)
-# EXPOSE 8080
+# EXPOSE 12345
 
-# Create a dummy user and group with desired UID and GID to avoid permission issues.
-RUN groupadd -g ${GID} chrom-d && \
-    useradd -u ${UID} -g ${GID} -m chrom-d
 
+# Map the user to a username appropriately:
+RUN set -eux; \
+    if getent passwd "${UID}" >/dev/null; then \
+      olduser="$(getent passwd ${UID} | cut -d: -f1)"; \
+      userdel -r "$olduser" || true; \
+    fi; \
+    if getent group "${GID}" >/dev/null; then \
+      oldgrp="$(getent group ${GID} | cut -d: -f1)"; \
+      groupdel "$oldgrp" || true; \
+    fi; \
+    groupadd -g "${GID}" chrom-d; \
+    useradd -m -u "${UID}" -g "${UID}" -s /bin/bash chrom-d
+
+# Allow sudo without password in the container for the new username:
 RUN echo "chrom-d ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/99-chrom-d
+
 
 # ============================= DEPENDENCIES ====================
 ENV DEBIAN_FRONTEND=noninteractive
@@ -64,6 +80,9 @@ RUN rm -f /usr/local/bin/sudo
 
 # Install a simple build script:
 RUN install -m755 /dev/stdin /usr/local/bin/chromium-build.sh <<'SH'
+#!/bin/bash
+set -e
+
 # Configure git for safe.directory
 git config --global --add safe.directory /depot_tools && \
 git config --global --add safe.directory /chromium/src
@@ -76,13 +95,17 @@ for dir in /chromium/src/third_party/*; do
     fi
 done
 cd /chromium/src/
+# Prepare makefiles for QtCreator:
+gn gen out/qtcreator --ide=qtcreator
+# Independent from anything else, prepare regular makefiles:
 gn gen out/Default
+
+# Build (takes a long time).
 time autoninja -C out/Default chrome
 SH
 
 
-# Create normal user with name "chrom-d". Optional and you can use root but
-# not advised.
+# As the regular user created above from now on:
 USER chrom-d
 
 # Start Chromium Builder "chrom-d" (modify this command as needed)
