@@ -94,6 +94,14 @@ for dir in /chromium/src/third_party/*; do
         git config --global --add safe.directory "$dir"
     fi
 done
+
+# Update third party:
+cd /chromium
+gclient sync -D
+
+# Update tools, sysroots, etc.
+gclient runhooks
+
 cd /chromium/src/
 # Prepare makefiles for QtCreator:
 gn gen out/qtcreator --ide=qtcreator
@@ -102,6 +110,9 @@ gn gen out/Default
 
 # Build (takes a long time).
 time autoninja -C out/Default chrome
+
+# Cleanup (if wanted):
+#gn clean out/Default
 SH
 
 
