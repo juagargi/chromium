@@ -13,6 +13,7 @@
 #include "base/memory/ptr_util.h"
 #include "base/task/sequenced_task_runner.h"
 #include "build/build_config.h"
+#include "chrome/browser/net/fpki_throttle.h"
 #include "chrome/common/google_url_loader_throttle.h"
 #include "chrome/common/request_header_integrity/buildflags.h"
 #include "chrome/renderer/chrome_content_renderer_client.h"
@@ -342,6 +343,14 @@ URLLoaderThrottleProviderImpl::CreateThrottles(
       throttles.push_back(std::move(throttle));
     }
   }
+
+  DLOG(INFO)
+      << "deleteme about to add FPKI throttle"
+         "====================================================================";
+  throttles.push_back(std::make_unique<chrome::browser::net::FpkiThrottle>());
+  DLOG(INFO)
+      << "deleteme FPKI throttle added"
+         "====================================================================";
 
   return throttles;
 }

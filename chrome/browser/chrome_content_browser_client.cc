@@ -27,6 +27,7 @@
 #include "base/functional/callback.h"
 #include "base/i18n/base_i18n_switches.h"
 #include "base/i18n/character_encoding.h"
+#include "base/logging.h"
 #include "base/memory/raw_ptr.h"
 #include "base/memory/scoped_refptr.h"
 #include "base/metrics/field_trial_params.h"
@@ -105,6 +106,7 @@
 #include "chrome/browser/metrics/chrome_metrics_service_accessor.h"
 #include "chrome/browser/navigation_predictor/anchor_element_preloader.h"
 #include "chrome/browser/net/chrome_network_delegate.h"
+#include "chrome/browser/net/fpki_throttle.h"
 #include "chrome/browser/net/profile_network_context_service.h"
 #include "chrome/browser/net/profile_network_context_service_factory.h"
 #include "chrome/browser/net/system_network_context_manager.h"
@@ -5842,6 +5844,14 @@ ChromeContentBrowserClient::CreateURLLoaderThrottles(
   if (signin_throttle) {
     result.push_back(std::move(signin_throttle));
   }
+
+  DLOG(INFO)
+      << "deleteme about to add FPKI throttle"
+         "====================================================================";
+  result.push_back(std::make_unique<chrome::browser::net::FpkiThrottle>());
+  DLOG(INFO)
+      << "deleteme FPKI throttle added"
+         "====================================================================";
 
   return result;
 }
