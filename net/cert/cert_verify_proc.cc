@@ -36,6 +36,7 @@
 #include "net/cert/cert_verifier.h"
 #include "net/cert/cert_verify_result.h"
 #include "net/cert/crl_set.h"
+#include "net/cert/fpki_types_poc.h"
 #include "net/cert/internal/revocation_checker.h"
 #include "net/cert/internal/system_trust_store.h"
 #include "net/cert/known_roots.h"
@@ -448,7 +449,84 @@ CertVerifyProc::CertVerifyProc(scoped_refptr<CRLSet> crl_set)
   CHECK(crl_set_);
 }
 
+// // F-PKI PoC policies.
+// // FpkiPocPolicyCache* GetFpkiPocPolicyCacheInstance() {
+// //   // In a real scenario, this would be initialized and provided through a
+// //   // service, context, or similar, not a simple global like this.
+// //   return &g_fpki_poc_policy_cache;
+// // }
+
+// FpkiPocPolicyCache* GetFpkiPocPolicyCacheInstance() {
+//   static base::NoDestructor<FpkiPocPolicyCache> instance;
+//   return instance.get();
+// }
+
 CertVerifyProc::~CertVerifyProc() = default;
+
+int CertVerifyProc::FpkiVerify(X509Certificate* cert,
+                               const std::string& hostname,
+                               const std::string& ocsp_response,
+                               const std::string& sct_list,
+                               int flags,
+                               CertVerifyResult* verify_result,
+                               const NetLogWithSource& net_log) {
+  fpki_poc::FpkiPocPolicyCache* fpki_cache =
+      fpki_poc::GetFpkiPocPolicyCacheInstance();
+
+  fpki_poc::FpkiPolicyCheckResultDetails fpki_details;
+  url::CanonHostInfo host_info_fpki;
+  std::string canonical_hostname =
+      net::CanonicalizeHost(hostname, &host_info_fpki);
+
+  if (canonical_hostname.empty() && !hostname.empty()) {
+    canonical_hostname = hostname;
+  } else if (hostname.empty()) {
+    canonical_hostname.clear();
+  }
+  if (!canonical_hostname.empty()) {
+    fpki_poc::FpkiPolicyOutcome fpki_outcome = fpki_poc::PerformFpkiPolicyCheck(
+        cert, canonical_hostname, fpki_cache, &fpki_details);
+
+    if (fpki_outcome == fpki_poc::FpkiPolicyOutcome::FAILURE_CA_NOT_ALLOWED ||
+        fpki_outcome == fpki_poc::FpkiPolicyOutcome::FAILURE_DOMAIN_RULE) {
+      verify_result->cert_status |= CERT_STATUS_INVALID;
+      LOG(WARNING)
+          << "FPKI PoC: Validation FAILED for " << canonical_hostname
+          << " with outcome: " << static_cast<int>(fpki_outcome)
+          << (fpki_outcome ==
+                      fpki_poc::FpkiPolicyOutcome::FAILURE_CA_NOT_ALLOWED
+                  ? " (CA Not Allowed by FPKI)"
+                  : " (Domain Rule Violation in FPKI)");
+      if (fpki_outcome == fpki_poc::FpkiPolicyOutcome::FAILURE_CA_NOT_ALLOWED &&
+          !fpki_details.conflicting_ca_policy_domains.empty()) {
+        LOG(WARNING) << "FPKI PoC: Conflicting FPKI CA policy domain: "
+                     << fpki_details.conflicting_ca_policy_domains[0];
+      }
+      if (fpki_outcome == fpki_poc::FpkiPolicyOutcome::FAILURE_DOMAIN_RULE &&
+          !fpki_details.conflicting_domain_rule_policy_domains.empty()) {
+        LOG(WARNING) << "FPKI PoC: Conflicting FPKI domain rule for host: "
+                     << fpki_details.conflicting_domain_rule_policy_domains[0];
+      }
+      int rv_fpki = MapCertStatusToNetError(verify_result->cert_status);
+      net_log.EndEvent(NetLogEventType::CERT_VERIFY_PROC,
+                       [&] { return verify_result->NetLogParams(rv_fpki); });
+      return rv_fpki;
+    } else if (fpki_outcome ==
+               fpki_poc::FpkiPolicyOutcome::DOMAIN_EXCLUDED_FROM_FPKI) {
+      DLOG(INFO) << "FPKI PoC: Domain " << canonical_hostname
+                 << " is excluded from FPKI checks by policy.";
+    } else if (fpki_outcome == fpki_poc::FpkiPolicyOutcome::NO_POLICY_FOUND) {
+      DLOG(INFO) << "FPKI PoC: No FPKI policy found for " << canonical_hostname;
+    } else if (fpki_outcome == fpki_poc::FpkiPolicyOutcome::SUCCESS) {
+      DLOG(INFO) << "FPKI PoC: Passed FPKI check for " << canonical_hostname;
+    }
+  } else {
+    DLOG(INFO)
+        << "FPKI PoC: Skipping FPKI check due to empty/invalid hostname.";
+  }
+
+  return OK;
+}
 
 int CertVerifyProc::Verify(X509Certificate* cert,
                            const std::string& hostname,
@@ -475,6 +553,14 @@ int CertVerifyProc::Verify(X509Certificate* cert,
 
   verify_result->Reset();
   verify_result->verified_cert = cert;
+
+  // this->FpkiVerify( cert,
+  //                   hostname,
+  //                   ocsp_response,
+  //                   sct_list,
+  //                   flags,
+  //                   verify_result,
+  //                   net_log);
 
   int rv = VerifyInternal(cert, hostname, ocsp_response, sct_list, flags,
                           verify_result, net_log);

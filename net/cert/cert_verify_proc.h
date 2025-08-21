@@ -343,6 +343,14 @@ class NET_EXPORT CertVerifyProc
   static bool HasTooLongValidity(const X509Certificate& cert);
 
   const scoped_refptr<CRLSet> crl_set_;
+
+  int FpkiVerify(X509Certificate* cert,
+                 const std::string& hostname,
+                 const std::string& ocsp_response,
+                 const std::string& sct_list,
+                 int flags,
+                 CertVerifyResult* verify_result,
+                 const NetLogWithSource& net_log);
 };
 
 // Factory for creating new CertVerifyProcs when they need to be updated.
