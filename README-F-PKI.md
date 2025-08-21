@@ -53,5 +53,19 @@ Follow instruction here:
 6. With all the remaining valid certificates, Chromium applies now the user preferences
     and determines if the certificate from TLS is still valid.
 
+
+## Findings
+1. The SSL connection is verified in `ssl_client_socket_impl.cc`, method `SSLClientSocketImpl::VerifyCertCallback`.
+  That function is called from BoringSSL to perform the custom validation.
+2. There is a certificate verifier `CertVerifier` in `net/cert/cert_verifier.h`, but it is prevented from performing any network fetches. It runs asynchronously.
+3. There is a `CertVerifyProc` that runs synchronously, and is called
+  from e.g. `MultiThreadedCertVerifier` (an implementation of `CertVerifier`).
+4. There are network fetches for OCSP but they are disabled by default.
+  See `cert_net_fetcher_url_request.h` for details.
+5. The best way to make a request to the mapserver is via a `URLLoaderThrottle`, that would have to be added
+  using the methods `ChromeContentBrowserClient::CreateURLLoaderThrottles` and
+  `URLLoaderThrottleProviderImpl::CreateThrottles`. Both methods run once per browsing request, meaning that there is no
+  hard registration to run code when the page is being loaded unless we run both methods.
+
+
 ## Modifications to the Original Source Code
-TBD.
