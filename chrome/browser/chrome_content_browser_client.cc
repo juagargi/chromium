@@ -5845,13 +5845,13 @@ ChromeContentBrowserClient::CreateURLLoaderThrottles(
     result.push_back(std::move(signin_throttle));
   }
 
-  DLOG(INFO)
-      << "deleteme about to add FPKI throttle"
-         "====================================================================";
+  // DLOG(INFO)
+  //     << "deleteme about to add FPKI throttle"
+  //        "====================================================================";
   result.push_back(std::make_unique<chrome::browser::net::FpkiThrottle>());
-  DLOG(INFO)
-      << "deleteme FPKI throttle added"
-         "====================================================================";
+  // DLOG(INFO)
+  //     << "deleteme FPKI throttle added"
+  //        "====================================================================";
 
   return result;
 }

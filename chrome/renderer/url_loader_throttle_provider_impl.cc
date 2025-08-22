@@ -345,8 +345,10 @@ URLLoaderThrottleProviderImpl::CreateThrottles(
   }
 
   DLOG(INFO)
-      << "deleteme about to add FPKI throttle"
+      << "deleteme about to add FPKI throttle but it will fail on not UI thread"
          "====================================================================";
+  // deleteme: TODO: will make a DCHECK fail when the Fpki service gets the UI
+  // thread and adds a task. Fix it.
   throttles.push_back(std::make_unique<chrome::browser::net::FpkiThrottle>());
   DLOG(INFO)
       << "deleteme FPKI throttle added"

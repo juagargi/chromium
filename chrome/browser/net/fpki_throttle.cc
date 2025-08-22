@@ -4,7 +4,7 @@
 
 #include "base/logging.h"
 #include "chrome/browser/net/fpki_throttle.h"
-// #include "chrome/browser/net/fpki_service.h"
+#include "chrome/browser/net/fpki_service.h"
 #include "services/network/public/cpp/resource_request.h"
 #include "url/gurl.h"
 #include "url/url_constants.h"
@@ -25,11 +25,11 @@ void FpkiThrottle::WillStartRequest(network::ResourceRequest* request,
 
   const GURL& url = request->url;
   if (!url.SchemeIs(url::kHttpsScheme)) return;
-  const std::string_view host = url.host_piece();
+  const std::string host = url.host();
   DLOG(INFO) << "deleteme ++++++++++++++++++++++++++++++ LOADING URL for " << host;
 
   if (host.empty()) return;
-  // FpkiService::Get()->FetchIfNeeded(host);  // fire-and-forget, parallel to TLS
+  FpkiService::Get()->FetchIfNeeded(host);  // fire-and-forget, parallel to TLS
 }
 
 }
