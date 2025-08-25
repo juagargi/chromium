@@ -19,6 +19,7 @@
 #include "chrome/renderer/chrome_content_renderer_client.h"
 #include "chrome/renderer/chrome_render_frame_observer.h"
 #include "chrome/renderer/chrome_render_thread_observer.h"
+#include "chrome/renderer/fpki_throttle.h"
 #include "components/fingerprinting_protection_filter/common/fingerprinting_protection_filter_features.h"
 #include "components/fingerprinting_protection_filter/renderer/renderer_agent.h"
 #include "components/fingerprinting_protection_filter/renderer/renderer_url_loader_throttle.h"
@@ -344,15 +345,10 @@ URLLoaderThrottleProviderImpl::CreateThrottles(
     }
   }
 
-  DLOG(INFO)
-      << "deleteme about to add FPKI throttle but it will fail on not UI thread"
-         "====================================================================";
-  // deleteme: TODO: will make a DCHECK fail when the Fpki service gets the UI
-  // thread and adds a task. Fix it.
-  throttles.push_back(std::make_unique<chrome::browser::net::FpkiThrottle>());
-  DLOG(INFO)
-      << "deleteme FPKI throttle added"
-         "====================================================================";
+  // DLOG(INFO)
+  //     << "deleteme about to add FPKI throttle at non UI thread "
+  //        "====================================================================";
+  throttles.push_back(std::make_unique<RendererFpkiThrottle>());
 
   return throttles;
 }

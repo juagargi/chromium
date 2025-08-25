@@ -1,0 +1,6 @@
+module chrome.mojom;
+
+interface Fpki {
+  // Ask the browser to start (if needed) an fpki fetch for this host.
+  StartFetchIfNeeded(string host);
+};

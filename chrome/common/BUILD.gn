@@ -254,6 +254,7 @@ static_library("common_lib") {
   ]
 
   deps = [
+    ":fpki_mojom",
     "//components/cdm/common:buildflags",
     "//components/crash/core/app",
     "//components/google/core/common",
@@ -767,4 +768,9 @@ mojom("supervised_user_commands_mojom") {
 mojom("offline_page_auto_fetcher_mojom") {
   sources = [ "offline_page_auto_fetcher.mojom" ]
   public_deps = [ "//url/mojom:url_mojom_gurl" ]
+}
+
+mojom("fpki_mojom") {
+  sources = [ "fpki.mojom" ]
+  public_deps = [ "//mojo/public/mojom/base" ]
 }

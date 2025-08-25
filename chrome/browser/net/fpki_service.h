@@ -18,8 +18,10 @@ class FpkiService {
  public:
   static FpkiService* Get();  // UI-thread singleton
 
-  void FetchIfNeeded(const std::string& host);            // fire-and-forget
-  bool Lookup(const std::string& host, std::string* out); // read-only, no I/O
+  // Safe from any sequence; will hop to UI before touching NetworkContext.
+  void FetchIfNeeded(const std::string& host);
+  // No I/O; returns cached body if present/fresh.
+  bool Lookup(const std::string& host, std::string* out);
 
  private:
   friend class base::NoDestructor<FpkiService>;
@@ -32,9 +34,9 @@ class FpkiService {
                    std::unique_ptr<std::string> body);
 
   base::Lock lock_;
-  std::unordered_map<std::string, base::TimeTicks> inflight_ GUARDED_BY(lock_);
   struct CacheEntry { std::string body; base::TimeTicks ts; };
   std::unordered_map<std::string, CacheEntry> cache_ GUARDED_BY(lock_);
+  std::unordered_map<std::string, base::TimeTicks> inflight_ GUARDED_BY(lock_);
 };
 
 #endif

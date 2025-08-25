@@ -15,6 +15,7 @@
 #include "chrome/browser/chrome_content_browser_client_parts.h"
 #include "chrome/browser/content_settings/content_settings_manager_delegate.h"
 #include "chrome/browser/headless/headless_mode_util.h"
+#include "chrome/browser/net/fpki_mojo_impl.h"
 #include "chrome/browser/net/net_error_tab_helper.h"
 #include "chrome/browser/net_benchmarking.h"
 #include "chrome/browser/password_manager/chrome_password_manager_client.h"
@@ -26,6 +27,7 @@
 #include "chrome/browser/trusted_vault/trusted_vault_encryption_keys_tab_helper.h"
 #include "chrome/common/buildflags.h"
 #include "chrome/common/chrome_features.h"
+#include "chrome/common/fpki.mojom.h"
 #include "components/autofill/content/browser/content_autofill_driver_factory.h"
 #include "components/content_capture/browser/onscreen_content_provider.h"
 #include "components/fingerprinting_protection_filter/browser/throttle_manager.h"
@@ -286,6 +288,14 @@ void ChromeContentBrowserClient::ExposeInterfacesToRenderer(
             ui_task_runner);
   }
 #endif  // BUILDFLAG(IS_CHROMEOS) && defined(ARCH_CPU_X86_64)
+
+  // Add Fpki for renderers (creation on UI).
+  registry->AddInterface(
+      base::BindRepeating(
+          [](mojo::PendingReceiver<chrome::mojom::Fpki> receiver) {
+            (new FpkiMojoImpl())->Bind(std::move(receiver));
+          }),
+      ui_task_runner);
 
   for (auto& ep : extra_parts_) {
     ep->ExposeInterfacesToRenderer(registry, associated_registry,
