@@ -15,7 +15,7 @@ class FpkiMojoImpl : public chrome::mojom::Fpki {
 
   void Bind(mojo::PendingReceiver<chrome::mojom::Fpki> receiver);
 
-  // chrome::mojom::Fpki:
+  // From interface chrome::mojom::Fpki:
   void StartFetchIfNeeded(const std::string& host) override;
 
  private:

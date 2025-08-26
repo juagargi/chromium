@@ -4,7 +4,6 @@
 
 #include "chrome/browser/net/fpki_mojo_impl.h"
 #include "chrome/browser/net/fpki_service.h"
-#include "content/public/browser/browser_thread.h"
 
 FpkiMojoImpl::FpkiMojoImpl() = default;
 FpkiMojoImpl::~FpkiMojoImpl() = default;

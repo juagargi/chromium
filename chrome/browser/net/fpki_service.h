@@ -5,14 +5,13 @@
 #ifndef CHROME_BROWSER_NET_FPKI_SERVICE_H_
 #define CHROME_BROWSER_NET_FPKI_SERVICE_H_
 
-#define MAPSERVER_HOST "mapserver.ethz.ch"
-#define MAPSERVER_ENDPOINT "https://" MAPSERVER_HOST "/fpki"
-
 #include <unordered_map>
 #include "base/no_destructor.h"
 #include "base/synchronization/lock.h"
 #include "base/time/time.h"
-// #include "base/time/tick_clock.h"
+
+#define MAPSERVER_HOST "mapserver.ethz.ch"
+#define MAPSERVER_ENDPOINT "https://" MAPSERVER_HOST "/fpki"
 
 class FpkiService {
  public:

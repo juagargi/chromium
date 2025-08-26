@@ -5,16 +5,13 @@
 #ifndef CHROME_BROWSER_NET_FPKI_THROTTLE_H_
 #define CHROME_BROWSER_NET_FPKI_THROTTLE_H_
 
-// #include <memory>
 #include "third_party/blink/public/common/loader/url_loader_throttle.h"
 
 namespace chrome::browser::net {
 
 class FpkiThrottle : public blink::URLLoaderThrottle {
  public:
-  // static std::unique_ptr<blink::URLLoaderThrottle> Create();
-
-  // blink::URLLoaderThrottle:
+  // From interface blink::URLLoaderThrottle:
   void WillStartRequest(network::ResourceRequest* request,
                         bool* defer) override;
   const char* NameForLoggingWillStartRequest() override;

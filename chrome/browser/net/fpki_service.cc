@@ -120,8 +120,18 @@ void FpkiService::OnFetchDone(const std::string& host, int net_error,
 bool FpkiService::Lookup(const std::string& host, std::string* out) {
   base::AutoLock l(lock_);
   auto it = cache_.find(host);
-  if (it == cache_.end()) return false;
-  if ((base::TimeTicks::Now() - it->second.ts) > kTtl) return false;
-  if (out) *out = it->second.body;
+  if (it == cache_.end()) {
+    // Not found.
+    return false;
+  }
+  if ((base::TimeTicks::Now() - it->second.ts) > kTtl) {
+    // Expired.
+    return false;
+  }
+
+  // Found and fresh. If the item itself is requested, copy it now.
+  if (out) {
+    *out = it->second.body;
+  }
   return true;
 }

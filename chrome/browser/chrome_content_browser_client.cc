@@ -27,7 +27,6 @@
 #include "base/functional/callback.h"
 #include "base/i18n/base_i18n_switches.h"
 #include "base/i18n/character_encoding.h"
-#include "base/logging.h"
 #include "base/memory/raw_ptr.h"
 #include "base/memory/scoped_refptr.h"
 #include "base/metrics/field_trial_params.h"
@@ -5845,13 +5844,9 @@ ChromeContentBrowserClient::CreateURLLoaderThrottles(
     result.push_back(std::move(signin_throttle));
   }
 
-  // DLOG(INFO)
-  //     << "deleteme about to add FPKI throttle"
-  //        "====================================================================";
+  // Add a throttle (1 of 2) so that F-PKI can know when a download will happen,
+  // and start scheduling a request to the mapserver.
   result.push_back(std::make_unique<chrome::browser::net::FpkiThrottle>());
-  // DLOG(INFO)
-  //     << "deleteme FPKI throttle added"
-  //        "====================================================================";
 
   return result;
 }
