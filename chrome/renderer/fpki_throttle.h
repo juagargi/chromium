@@ -7,10 +7,7 @@ class RendererFpkiThrottle : public blink::URLLoaderThrottle {
  public:
   RendererFpkiThrottle();
   ~RendererFpkiThrottle() override;
-  void WillStartRequest(network::ResourceRequest* request, bool* defer) override;
+  void WillStartRequest(network::ResourceRequest* request,
+                        bool* defer) override;
   const char* NameForLoggingWillStartRequest() override;
-
- private:
-  void EnsureRemote();
-  mojo::Remote<chrome::mojom::Fpki> fpki_;
 };

@@ -54,6 +54,7 @@
 #include "chrome/renderer/chrome_render_frame_observer.h"
 #include "chrome/renderer/chrome_render_thread_observer.h"
 #include "chrome/renderer/controlled_frame/controlled_frame_extensions_renderer_api_provider.h"
+#include "chrome/renderer/fpki_bridge.h"
 #include "chrome/renderer/google_accounts_private_api_extension.h"
 #include "chrome/renderer/loadtimes_extension_bindings.h"
 #include "chrome/renderer/media/flash_embed_rewrite.h"
@@ -548,6 +549,10 @@ void ChromeContentRendererClient::RenderThreadStarted() {
           SetParentProfileCollectorForChildProcess(std::move(collector));
     }
   }
+
+  // Initialize the FPKI client bridge to bridge mapserver requests from
+  // the renderer to the UI.
+  fpki::RendererFpkiBridge::Get()->InitOnMainThread();
 }
 
 void ChromeContentRendererClient::ExposeInterfacesToBrowser(
