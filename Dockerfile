@@ -1,7 +1,7 @@
 # XXX(juagargi) from https://github.com/chromium/chromium/blob/main/docs/linux/build_instructions.md#docker
 
 # Use an official Ubuntu base image with Docker already installed
-FROM ubuntu:25.04
+FROM ubuntu:24.04
 
 # With the same UID and GID as the current user.
 ARG UID=1000
@@ -22,13 +22,6 @@ RUN apt-file update
 # Export depot_tools path
 ENV PATH="/depot_tools:${PATH}"
 
-# Set the working directory to the existing Chromium source directory.
-# This can be either "/chromium/src" or "/chromium".
-WORKDIR /chromium/src
-
-# Expose any necessary ports (if needed)
-# EXPOSE 12345
-
 
 # Map the user to a username appropriately:
 RUN set -eux; \
@@ -41,16 +34,10 @@ RUN set -eux; \
       groupdel "$oldgrp" || true; \
     fi; \
     groupadd -g "${GID}" chrom-d; \
-    useradd -m -u "${UID}" -g "${UID}" -s /bin/bash chrom-d
+    useradd -m -u "${UID}" -g "${GID}" -s /bin/bash chrom-d
 
 # Allow sudo without password in the container for the new username:
 RUN echo "chrom-d ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/99-chrom-d
-
-
-# ============================= DEPENDENCIES ====================
-ENV DEBIAN_FRONTEND=noninteractive
-COPY build/install-build-deps.py /tmp/install-build-deps.py
-RUN chmod +x /tmp/install-build-deps.py
 
 # Provide a no-op sudo for the script (build runs as root; sudo would fail)
 # RUN printf '#!/bin/sh\nexec "$@"\n' >/usr/local/bin/sudo && chmod +x /usr/local/bin/sudo
@@ -72,13 +59,8 @@ done
 exec "$@"
 SH
 
-RUN apt-get update
-RUN python3 /tmp/install-build-deps.py \
-    --no-prompt --unsupported --lib32 --no-chromeos-fonts
-RUN rm -f /usr/local/bin/sudo
-# ==============================================================
 
-# Install a simple build script:
+# Install a simple build script to run inside the container:
 RUN install -m755 /dev/stdin /usr/local/bin/chromium-build.sh <<'SH'
 #!/bin/bash
 set -e
@@ -115,6 +97,21 @@ time autoninja -C out/Default chrome
 #gn clean out/Default
 SH
 
+
+# Set the working directory to the existing Chromium source directory.
+# This can be either "/chromium/src" or "/chromium".
+WORKDIR /chromium/src
+
+# ============================= DEPENDENCIES ====================
+ENV DEBIAN_FRONTEND=noninteractive
+COPY build/install-build-deps.py /tmp/install-build-deps.py
+RUN chmod +x /tmp/install-build-deps.py
+
+RUN apt-get update
+RUN python3 /tmp/install-build-deps.py \
+    --no-prompt --unsupported --lib32 --no-chromeos-fonts
+RUN rm -f /usr/local/bin/sudo
+# ==============================================================
 
 # As the regular user created above from now on:
 USER chrom-d

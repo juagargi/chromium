@@ -8,6 +8,8 @@ services:
       args:
         UID: "${UID}"
         GID: "${GID}"
+        SRC: "/home/juagargi/devel/ETH/chromium"
+        DEPOT: "/home/juagargi/devel/depot_tools"
     container_name: chrom-b
     network_mode: host
 
@@ -27,8 +29,8 @@ services:
     restart: unless-stopped         # stays up across reboots unless you stop it
     working_dir: /chromium
     volumes:
-      - /home/juagargi/devel/ETH/chromium:/chromium
-      - /home/juagargi/devel/depot_tools:/depot_tools
+      - ${SRC}:/chromium
+      - ${DEPOT}:/depot_tools
       # DBUS:
       - /run/dbus/system_bus_socket:/run/dbus/system_bus_socket:ro  # optional; silences the dbus warning
       # X11:

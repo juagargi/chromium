@@ -1,0 +1,7 @@
+# Ignore all of the source code while building the image.
+**
+!Dockerfile
+!.dockerignore
+
+# We need the script to install the dependencies, exclude it.
+!build/install-build-deps.py

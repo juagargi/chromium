@@ -31,6 +31,20 @@ Follow instruction here:
 - [VS Code](https://github.com/juagargi/chromium/blob/main/docs/vscode.md)
 
 
+# Developing Remotely
+With VS Code, using its _tunnels_:
+## On the remote system
+- Install VS Code.
+- Run `code tunnel` and follow instructions.
+
+## On the desktop system
+- Open VS Code.
+- Select _Connect to Tunnel_.
+  - Use the same account as the one at the remote system.
+  - Open the `chromium/src` folder.
+  - _Additionally_ install (all/some) extension to the remote system.
+
+
 # Planned Work Roadmap
 (temporary)
 
